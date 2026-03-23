@@ -36,7 +36,7 @@ body {
     position: absolute;
     left: var(--ribbon-width);
     z-index: var(--layer-sidedock);
-    box-shadow: rgba(0, 0, 0, 0.5) 10px 0px 18px -2px;
+    box-shadow: rgba(0, 0, 0, 0.5) 10px 0 18px -2px;
     transition: transform var(--sidebar-expand-collapse-speed) ease !important;
 }
 
@@ -45,7 +45,7 @@ body {
     position: absolute;
     right: 0;
     z-index: var(--layer-sidedock);
-    box-shadow: rgba(0, 0, 0, 0.5) -10px 0px 18px -2px;
+    box-shadow: rgba(0, 0, 0, 0.5) -10px 0 18px -2px;
     transition: transform var(--sidebar-expand-collapse-speed) ease !important;
 }
 

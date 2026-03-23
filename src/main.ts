@@ -1,6 +1,6 @@
-import {Plugin, WorkspaceRibbon, WorkspaceSplit} from "obsidian";
-import {SettingsOptionInterface} from "./types/SettingsOptionInterface";
-import {SidebarHoverSettingsTab} from "./setting/sidebarHoverSettingsTab";
+import { Plugin, WorkspaceRibbon, WorkspaceSplit } from "obsidian";
+import { SettingsOptionInterface } from "./types/SettingsOptionInterface";
+import { SidebarHoverSettingsTab } from "./setting/sidebarHoverSettingsTab";
 import DEFAULT_SETTINGS from "./setting/DEFAULT_SETTINGS";
 
 // 扩展接口以访问内部属性
@@ -181,7 +181,7 @@ export default class OpenSidebarHover extends Plugin {
         // 辅助函数，用于跟踪事件以便清理
         const attach = (element: HTMLElement, type: string, handler: EventListener) => {
             element.addEventListener(type, handler);
-            this.manualEvents.push({element, type, handler});
+            this.manualEvents.push({ element, type, handler });
         };
 
         // 为右侧分割区域添加悬停类的实现
@@ -222,7 +222,7 @@ export default class OpenSidebarHover extends Plugin {
      */
     detachManualEvents() {
         // 移除所有跟踪的事件监听器
-        this.manualEvents.forEach(({element, type, handler}) => {
+        this.manualEvents.forEach(({ element, type, handler }) => {
             element.removeEventListener(type, handler);
         });
         this.manualEvents = [];
@@ -255,30 +255,30 @@ export default class OpenSidebarHover extends Plugin {
         this.updateCSSVariables();
 
         // 注册热键命令以切换侧边栏
-        // this.addCommand({
-        //     id: 'toggle-left-sidebar',
-        //     name: currentLanguage.toggleLeftSidebar,
-        //     callback: () => {
-        //         this.toggleLeftSidebar();
-        //     }
-        // });
+        this.addCommand({
+            id: 'toggle-left-sidebar',
+            name: "切换左侧侧边栏",
+            callback: () => {
+                this.toggleLeftSidebar();
+            }
+        });
 
-        // this.addCommand({
-        //     id: 'toggle-right-sidebar',
-        //     name: currentLanguage.toggleRightSidebar,
-        //     callback: () => {
-        //         this.toggleRightSidebar();
-        //     }
-        // });
+        this.addCommand({
+            id: 'toggle-right-sidebar',
+            name: "切换右侧侧边栏",
+            callback: () => {
+                this.toggleRightSidebar();
+            }
+        });
 
-        // this.addCommand({
-        //     id: 'toggle-both-sidebars',
-        //     name: currentLanguage.toggleBothSidebars,
-        //     callback: () => {
-        //         this.toggleBothSidebars();
-        //     },
-        //     hotkeys: [{modifiers: [], key: 'Escape'}]
-        // });
+        this.addCommand({
+            id: 'toggle-both-sidebars',
+            name: "切换两侧边栏",
+            callback: () => {
+                this.toggleBothSidebars();
+            },
+            hotkeys: [{ modifiers: [], key: 'Escape' }]
+        });
 
         this.app.workspace.onLayoutReady(() => {
             // 转换为扩展接口以访问内部属性
@@ -308,7 +308,7 @@ export default class OpenSidebarHover extends Plugin {
      * 插件卸载时执行
      */
     onunload() {
-        this.saveSettings();
+        this.saveSettings().then();
 
         // 如果添加了覆盖模式类，则移除
         document.body.classList.remove("sidebar-overlay-mode");

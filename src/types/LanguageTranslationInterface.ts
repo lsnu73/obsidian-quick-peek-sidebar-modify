@@ -163,7 +163,7 @@ interface LanguageTranslationInterface {
      */
     language: string;
     /**
-     * 工作区变化自动折叠左右面板
+     * 工作区变化自动折叠左右边栏
      */
     collapseOnWorkspaceChange: string;
     /**

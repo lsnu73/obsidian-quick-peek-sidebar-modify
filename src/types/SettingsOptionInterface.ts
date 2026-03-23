@@ -1,5 +1,3 @@
-import LanguageTranslationInterface from "./LanguageTranslationInterface";
-
 export interface SettingsOptionInterface {
     leftSidebar: boolean;
     rightSidebar: boolean;
