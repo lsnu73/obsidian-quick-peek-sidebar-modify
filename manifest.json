@@ -1,14 +1,10 @@
 {
-	"id": "quick-peek-sidebar",
-	"name": "Quick Peek Sidebar",
-	"version": "1.0.4",
-	"minAppVersion": "0.15.0",
-	"description": "Opens the left and/or right side panel by hovering over it.",
-	"author": "Bradley Wyatt",
-	"authorUrl": "https://github.com/bwya77",
-    "fundingUrl": {
-		"Buy Me a Coffee": "https://buymeacoffee.com/bwya77",
-		"GitHub Sponsor":  "https://github.com/sponsors/bwya77"
-  	},
+	"id": "obsidian-quick-peek-sidebar-modify",
+	"name": "Quick Peek Sidebar(modify)",
+	"version": "1.1.0",
+	"minAppVersion": "1.11.5",
+	"description": "将鼠标悬停在左侧和/或右侧面板上以打开它(基于 quick-peek-sidebar 二次修改 )",
+	"author": "wang",
+	"authorUrl": "https://github.com/lsnu73",
 	"isDesktopOnly": true
 }
