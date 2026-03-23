@@ -1,6 +1,6 @@
 import { App, Plugin, PluginSettingTab, Setting, WorkspaceRibbon, WorkspaceSplit } from "obsidian";
 
-// Extended interfaces to access internal properties
+// 扩展接口以访问内部属性
 interface ExtendedWorkspaceSplit extends WorkspaceSplit {
   containerEl: HTMLElement;
   collapsed: boolean;
@@ -46,12 +46,16 @@ const DEFAULT_SETTINGS: OpenSidebarHoverSettings = {
   rightSidebarMaxWidth: 325,
 };
 
+/**
+ * 侧边栏悬停展开插件
+ * 允许通过鼠标悬停在屏幕边缘来展开和折叠侧边栏
+ */
 export default class OpenSidebarHover extends Plugin {
   settings: OpenSidebarHoverSettings;
   isHoveringLeft = false;
   isHoveringRight = false;
   isPinnedLeft = false;
-  isPinnedRight =  false;
+  isPinnedRight = false;
   leftSplit: ExtendedWorkspaceSplit;
   rightSplit: ExtendedWorkspaceSplit;
   leftRibbon: ExtendedWorkspaceRibbon;
@@ -60,37 +64,40 @@ export default class OpenSidebarHover extends Plugin {
   leftSplitMouseMoveHandler: () => void;
   rightSplitMouseMoveHandler: () => void;
   workspaceChangeTimeout: NodeJS.Timeout | null = null;
-  
-  // Double-click tracking variables
+
+  // 双击跟踪变量
   private lastClickTime = 0;
   private lastClickTarget: HTMLElement | null = null;
   private doubleClickThreshold = 300;
-  
-  // Track manually added events for cleanup
+
+  // 手动添加的事件进行清理跟踪
   private manualEvents: Array<{
     element: HTMLElement;
     type: string;
     handler: EventListener;
   }> = [];
 
-  // Helper to check if user is actively editing (rename input, context menu open, etc.)
+  /**
+   * 检查用户是否正在编辑（重命名输入、上下文菜单打开等）
+   * @returns 是否正在编辑
+   */
   isActivelyEditing(): boolean {
-    // Check for open context menus
+    // 检查是否有打开的上下文菜单
     const hasOpenMenu = document.querySelector('.menu') !== null;
     if (hasOpenMenu) return true;
 
-    // Check for items being renamed in file explorer
+    // 检查文件浏览器中是否有项目正在重命名
     const hasRenameInput = document.querySelector('.is-being-renamed') !== null;
     if (hasRenameInput) return true;
 
-    // Check if an input or editable element inside a sidebar is focused
+    // 检查侧边栏中是否有输入或可编辑元素被聚焦
     const activeEl = document.activeElement as HTMLElement;
     if (activeEl) {
       const isInput = activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA';
       const isEditable = activeEl.isContentEditable;
 
       if (isInput || isEditable) {
-        // Check if the focused element is within either sidebar
+        // 检查聚焦的元素是否在任一侧边栏内
         const inLeftSidebar = this.leftSplit?.containerEl?.contains(activeEl);
         const inRightSidebar = this.rightSplit?.containerEl?.contains(activeEl);
         if (inLeftSidebar || inRightSidebar) return true;
@@ -100,61 +107,70 @@ export default class OpenSidebarHover extends Plugin {
     return false;
   }
 
+  /**
+   * 处理工作区变化
+   */
   handleWorkspaceChange() {
-    // Wait to ensure DOM is ready
+    // 等待以确保DOM已就绪
     if (this.workspaceChangeTimeout) clearTimeout(this.workspaceChangeTimeout);
-    
+
     this.workspaceChangeTimeout = setTimeout(() => {
       this.forceReinitialize();
     }, 100);
   }
 
+  /**
+   * 强制重新初始化插件状态
+   */
   forceReinitialize() {
-    // Reset all state and get fresh references
+    // 重置所有状态并获取新的引用
     this.leftSplit = this.app.workspace.leftSplit as any;
     this.rightSplit = this.app.workspace.rightSplit as any;
     this.isHoveringLeft = false;
     this.isHoveringRight = false;
-    
-    // Clean and reattach
+
+    // 清理并重新附加事件
     this.detachManualEvents();
     this.attachManualEvents();
     this.collapseBoth();
   }
 
-  // Event handler for document clicks (now handles both single and double clicks)
+  /**
+   * 文档点击事件处理程序（同时处理单击和双击）
+   * @param e 鼠标事件
+   */
   documentClickHandler = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
     const now = Date.now();
 
-    // Check if this is a double click (same target within threshold)
+    // 检查是否为双击（在阈值内点击同一目标）
     const isDoubleClick = this.lastClickTarget === target &&
-                         (now - this.lastClickTime) < this.doubleClickThreshold;
+      (now - this.lastClickTime) < this.doubleClickThreshold;
 
-    // Update tracking variables
+    // 更新跟踪变量
     this.lastClickTime = now;
     this.lastClickTarget = target;
 
-    // Handle double-click for pinning if enabled
+    // 如果启用了双击固定，则处理双击
     if (isDoubleClick && this.settings.doubleClickPin) {
       this.handleSidebarDoubleClick(target);
-      return; // Skip single-click logic for double-clicks
+      return; // 跳过双击的单击逻辑
     }
 
-    // Don't collapse if user is actively editing (rename, menu open, etc.)
+    // 如果用户正在编辑（重命名、菜单打开等），则不折叠
     if (this.isActivelyEditing()) return;
 
-    // Don't collapse if window is not focused and setting is enabled
+    // 如果窗口未聚焦且启用了该设置，则不折叠
     if (this.settings.onlyWhenFocused && !document.hasFocus()) return;
 
-    // Original single-click logic
-    // Make sure leftSplit and rightSplit are initialized
+    // 原始单击逻辑
+    // 确保leftSplit和rightSplit已初始化
     if (!this.leftSplit || !this.rightSplit) return;
 
     const leftSplitEl = this.leftSplit.containerEl;
     const rightSplitEl = this.rightSplit.containerEl;
 
-    // If clicking outside sidebar areas and they're expanded, collapse them
+    // 如果点击侧边栏区域外且侧边栏已展开，则折叠它们
     if (!leftSplitEl.contains(target) && !rightSplitEl.contains(target)) {
       if (!this.leftSplit.collapsed && this.settings.leftSidebar && !this.isPinnedLeft) {
         this.collapseLeft();
@@ -165,73 +181,80 @@ export default class OpenSidebarHover extends Plugin {
     }
   };
 
-  // Handle double-click on sidebar for pinning/unpinning
+  /**
+   * 处理侧边栏双击以固定/取消固定
+   * @param target 双击目标元素
+   */
   handleSidebarDoubleClick(target: HTMLElement) {
     if (!this.leftSplit || !this.rightSplit) return;
-    
+
     const leftSplitEl = this.leftSplit.containerEl;
     const rightSplitEl = this.rightSplit.containerEl;
-    
-    // Determine which sidebar was double-clicked
+
+    // 确定哪个侧边栏被双击
     if (leftSplitEl.contains(target)) {
       this.isPinnedLeft = !this.isPinnedLeft;
     }
-    
+
     if (rightSplitEl.contains(target)) {
       this.isPinnedRight = !this.isPinnedRight;
     }
   }
 
-  // Attach manually managed event listeners
+  /**
+   * 附加手动管理的事件监听器
+   */
   attachManualEvents() {
-    // Helper function to track events for cleanup
+    // 辅助函数，用于跟踪事件以便清理
     const attach = (element: HTMLElement, type: string, handler: EventListener) => {
       element.addEventListener(type, handler);
       this.manualEvents.push({ element, type, handler });
     };
-    
-    // Implementation with hover class for right split
+
+    // 为右侧分割区域添加悬停类的实现
     if (this.rightSplit?.containerEl) {
-      this.rightSplitMouseEnterHandler = () => { 
-        this.isHoveringRight = true; 
+      this.rightSplitMouseEnterHandler = () => {
+        this.isHoveringRight = true;
         this.rightSplit.containerEl.addClass('hovered');
       };
       attach(this.rightSplit.containerEl, "mouseenter", this.rightSplitMouseEnterHandler);
-      
+
       attach(this.rightSplit.containerEl, "mouseleave", this.rightSplitMouseLeaveHandler);
-      
+
       this.rightSplitMouseMoveHandler = () => this.rightSplit.containerEl.addClass('hovered');
       attach(this.rightSplit.containerEl, "mousemove", this.rightSplitMouseMoveHandler);
     }
-    
-    // Implementation with hover class for left split
+
+    // 为左侧分割区域添加悬停类的实现
     if (this.leftRibbon && this.leftRibbon.containerEl) {
       attach(this.leftRibbon.containerEl, "mouseenter", this.leftRibbonMouseEnterHandler);
     }
-    
+
     if (this.leftSplit?.containerEl) {
-      this.leftSplitMouseEnterHandler = () => { 
-        this.isHoveringLeft = true; 
+      this.leftSplitMouseEnterHandler = () => {
+        this.isHoveringLeft = true;
         this.leftSplit.containerEl.addClass('hovered');
       };
       attach(this.leftSplit.containerEl, "mouseenter", this.leftSplitMouseEnterHandler);
-      
+
       attach(this.leftSplit.containerEl, "mouseleave", this.leftSplitMouseLeaveHandler);
-      
+
       this.leftSplitMouseMoveHandler = () => this.leftSplit.containerEl.addClass('hovered');
       attach(this.leftSplit.containerEl, "mousemove", this.leftSplitMouseMoveHandler);
     }
   }
 
-  // Detach manually managed event listeners
+  /**
+   * 分离手动管理的事件监听器
+   */
   detachManualEvents() {
-    // Remove all tracked event listeners
+    // 移除所有跟踪的事件监听器
     this.manualEvents.forEach(({ element, type, handler }) => {
       element.removeEventListener(type, handler);
     });
     this.manualEvents = [];
-    
-    // Clean up hover classes
+
+    // 清理悬停类
     if (this.rightSplit?.containerEl) {
       this.rightSplit.containerEl.removeClass('hovered');
     }
@@ -240,24 +263,27 @@ export default class OpenSidebarHover extends Plugin {
     }
   }
 
+  /**
+   * 插件加载时执行
+   */
   async onload() {
     await this.loadSettings();
 
-    // Apply overlay mode class if enabled in settings
+    // 如果设置中启用了覆盖模式，则应用覆盖模式类
     if (this.settings.overlayMode) {
       document.body.classList.add("sidebar-overlay-mode");
     }
 
-    // Add global CSS class to implement the suggested JS-CSS approach
+    // 添加全局CSS类以实现建议的JS-CSS方法
     document.body.classList.add("open-sidebar-hover-plugin");
 
-    // Update CSS variables based on settings
+    // 根据设置更新CSS变量
     this.updateCSSVariables();
 
-    // Register hotkey commands to toggle sidebars
+    // 注册热键命令以切换侧边栏
     this.addCommand({
       id: 'toggle-left-sidebar',
-      name: 'Toggle left sidebar',
+      name: '切换左侧边栏',
       callback: () => {
         this.toggleLeftSidebar();
       }
@@ -265,7 +291,7 @@ export default class OpenSidebarHover extends Plugin {
 
     this.addCommand({
       id: 'toggle-right-sidebar',
-      name: 'Toggle right sidebar',
+      name: '切换右侧边栏',
       callback: () => {
         this.toggleRightSidebar();
       }
@@ -273,7 +299,7 @@ export default class OpenSidebarHover extends Plugin {
 
     this.addCommand({
       id: 'toggle-both-sidebars',
-      name: 'Toggle both sidebars',
+      name: '切换两侧边栏',
       callback: () => {
         this.toggleBothSidebars();
       },
@@ -281,63 +307,74 @@ export default class OpenSidebarHover extends Plugin {
     });
 
     this.app.workspace.onLayoutReady(() => {
-      // Cast to extended interfaces to access internal properties
+      // 转换为扩展接口以访问内部属性
       this.leftSplit = this.app.workspace.leftSplit as unknown as ExtendedWorkspaceSplit;
       this.rightSplit = this.app.workspace.rightSplit as unknown as ExtendedWorkspaceSplit;
       this.leftRibbon = this.app.workspace.leftRibbon as unknown as ExtendedWorkspaceRibbon;
-      
-      // Register auto-cleaned events using Obsidian's API
+
+      // 使用Obsidian的API注册自动清理的事件
       this.registerDomEvent(document, "mousemove", this.mouseMoveHandler);
       this.registerDomEvent(document, "click", this.documentClickHandler);
-      
-      // To prevent plugin from breaking after workspace changes
+
+      // 防止工作区更改后插件损坏
       this.registerEvent(
         this.app.workspace.on('layout-change', () => {
           this.handleWorkspaceChange();
         })
       );
-      
-      // Attach manually managed event listeners
+
+      // 手动添加事件监听器
       this.attachManualEvents();
     });
 
     this.addSettingTab(new SidebarHoverSettingsTab(this.app, this));
   }
 
+  /**
+   * 插件卸载时执行
+   */
   onunload() {
     this.saveSettings();
 
-    // Remove overlay mode class if it was added
+    // 如果添加了覆盖模式类，则移除
     document.body.classList.remove("sidebar-overlay-mode");
-    
-    // Remove the global CSS class
+
+    // 移除全局CSS类
     document.body.classList.remove("open-sidebar-hover-plugin");
 
-    // Clean up all manually added event listeners
+    // 清理所有手动添加的事件监听器
     this.detachManualEvents();
   }
 
+  /**
+   * 加载设置
+   */
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
 
+  /**
+   * 保存设置
+   */
   async saveSettings() {
     await this.saveData(this.settings);
   }
 
-  // Helper method to update CSS variables
+  /**
+   * 更新CSS变量的辅助方法
+   */
   updateCSSVariables() {
-    // Create a style element to hold custom CSS variables
+    // 创建一个样式元素来保存自定义CSS变量
     const styleEl = document.createElement('style');
     styleEl.id = 'obsidian-quick-peek-sidebar-variables';
-    
-    // Remove any existing style element with this ID
+
+    // 移除任何现有的具有此ID的样式元素
     const existingStyle = document.getElementById(styleEl.id);
     if (existingStyle) {
       existingStyle.remove();
     }
-    
-    // Add the CSS variables to the style element
+
+    // 向样式元素添加CSS变量
     styleEl.textContent = `
       :root {
         --sidebar-expand-collapse-speed: ${this.settings.expandCollapseSpeed}ms;
@@ -351,54 +388,78 @@ export default class OpenSidebarHover extends Plugin {
         --right-sidebar-width: ${this.settings.rightSidebarMaxWidth}px !important;
       }
     `;
-    
-    // Add the style element to the document head
+
+    // 将样式元素添加到文档头部
     document.head.appendChild(styleEl);
   }
 
-  // Helpers
+  // 辅助方法
+  /**
+   * 获取编辑器宽度
+   * @returns 编辑器宽度
+   */
   getEditorWidth = () => this.app.workspace.containerEl.clientWidth;
 
+  /**
+   * 展开右侧边栏
+   */
   expandRight() {
-    // Start animation by expanding
+    // 通过展开开始动画
     this.rightSplit.expand();
     this.isHoveringRight = true;
   }
-  
+
+  /**
+   * 展开左侧边栏
+   */
   expandLeft() {
-    // Start animation by expanding
+    // 通过展开开始动画
     this.leftSplit.expand();
     this.isHoveringLeft = true;
   }
-  
+
+  /**
+   * 展开两侧边栏
+   */
   expandBoth() {
     this.expandRight();
     this.expandLeft();
   }
-  
+
+  /**
+   * 折叠右侧边栏
+   */
   collapseRight() {
-    // Only collapse if not pinned
+    // 仅在未固定时折叠
     if (!this.isPinnedRight) {
       this.rightSplit.collapse();
       this.isHoveringRight = false;
     }
   }
-  
+
+  /**
+   * 折叠左侧边栏
+   */
   collapseLeft() {
-    // Only collapse if not pinned
+    // 仅在未固定时折叠
     if (!this.isPinnedLeft) {
       this.leftSplit.collapse();
       this.isHoveringLeft = false;
     }
   }
-  
+
+  /**
+   * 折叠两侧边栏
+   */
   collapseBoth() {
     this.collapseRight();
     this.collapseLeft();
   }
 
-  // Toggle left sidebar only - used by hotkey command
-  // When showing via hotkey, sidebar is pinned and won't auto-hide until hotkey is pressed again
+  /**
+   * 仅切换左侧边栏 - 用于热键命令
+   * 通过热键显示时，侧边栏会被固定，直到再次按下热键才会自动隐藏
+   */
   toggleLeftSidebar() {
     if (!this.leftSplit) return;
 
@@ -414,7 +475,9 @@ export default class OpenSidebarHover extends Plugin {
     }
   }
 
-  // Toggle right sidebar only - used by hotkey command
+  /**
+   * 仅切换右侧边栏 - 用于热键命令
+   */
   toggleRightSidebar() {
     if (!this.rightSplit) return;
 
@@ -430,13 +493,15 @@ export default class OpenSidebarHover extends Plugin {
     }
   }
 
-  // Toggle both sidebars - used by hotkey command
+  /**
+   * 切换两侧边栏 - 用于热键命令
+   */
   toggleBothSidebars() {
     const leftExpanded = this.leftSplit && !this.leftSplit.collapsed;
     const rightExpanded = this.rightSplit && !this.rightSplit.collapsed;
 
     if (leftExpanded || rightExpanded) {
-      // At least one sidebar is expanded - collapse both and unpin
+      // 至少有一个侧边栏已展开 - 折叠两者并取消固定
       this.isPinnedLeft = false;
       this.isPinnedRight = false;
       if (this.leftSplit) {
@@ -448,7 +513,7 @@ export default class OpenSidebarHover extends Plugin {
         this.isHoveringRight = false;
       }
     } else {
-      // Both sidebars are collapsed - expand and pin both
+      // 两侧边栏都已折叠 - 展开并固定两者
       if (this.leftSplit) {
         this.expandLeft();
         this.isPinnedLeft = true;
@@ -459,17 +524,21 @@ export default class OpenSidebarHover extends Plugin {
       }
     }
   }
-  
-  // Event handlers
+
+  // 事件处理程序
+  /**
+   * 鼠标移动事件处理程序
+   * @param event 鼠标事件
+   */
   mouseMoveHandler = (event: MouseEvent) => {
-    // Skip hover detection if setting is enabled and window is not focused
+    // 如果启用了该设置且窗口未聚焦，则跳过悬停检测
     if (this.settings.onlyWhenFocused && !document.hasFocus()) {
       return;
     }
 
     const mouseX = event.clientX;
 
-    // Handle right sidebar hover
+    // 处理右侧边栏悬停
     if (this.settings.rightSidebar) {
       if (!this.isHoveringRight && this.rightSplit.collapsed && !this.isPinnedRight) {
         const editorWidth = this.getEditorWidth();
@@ -496,11 +565,11 @@ export default class OpenSidebarHover extends Plugin {
         }, this.settings.sidebarDelay);
       }
     }
-    
-    // Handle left sidebar hover
+
+    // 处理左侧边栏悬停
     if (this.settings.leftSidebar) {
       if (!this.isHoveringLeft && this.leftSplit.collapsed && !this.isPinnedLeft) {
-        // Check if mouse is in the left trigger area
+        // 检查鼠标是否在左侧触发区域
         this.isHoveringLeft = mouseX <= this.settings.leftSideBarPixelTrigger;
 
         if (this.isHoveringLeft && this.leftSplit.collapsed) {
@@ -524,29 +593,33 @@ export default class OpenSidebarHover extends Plugin {
     }
   };
 
+  /**
+   * 右侧分割区域鼠标离开事件处理程序
+   * @param event 鼠标事件
+   */
   rightSplitMouseLeaveHandler = (event: MouseEvent) => {
-    // Don't process if we're leaving to the tab header container or a menu
+    // 如果离开到标签头容器或菜单，则不处理
     const target = event.relatedTarget as HTMLElement;
     if (target && (target.closest('.workspace-tab-header-container-inner') ||
-                  (target.hasClass && target.hasClass('menu')) ||
-                  target?.classList?.contains('menu') ||
-                  target?.closest('.menu'))) {
+      (target.hasClass && target.hasClass('menu')) ||
+      target?.classList?.contains('menu') ||
+      target?.closest('.menu'))) {
       return;
     }
 
-    // Don't collapse if window is not focused and setting is enabled
+    // 如果窗口未聚焦且启用了该设置，则不折叠
     if (this.settings.onlyWhenFocused && !document.hasFocus()) return;
 
-    // Don't collapse if user is actively editing (rename, menu open, etc.)
+    // 如果用户正在编辑（重命名、菜单打开等），则不折叠
     if (this.isActivelyEditing()) return;
 
     if (this.settings.rightSidebar && !this.isPinnedRight) {
       this.isHoveringRight = false;
-      // Remove the hovered class
+      // 移除悬停类
       this.rightSplit.containerEl.removeClass('hovered');
 
       setTimeout(() => {
-        // Re-check editing state before collapsing
+        // 折叠前重新检查编辑状态
         if (!this.isHoveringRight && !this.isActivelyEditing()) {
           if (this.settings.syncLeftRight && this.settings.leftSidebar) {
             this.collapseBoth();
@@ -558,29 +631,33 @@ export default class OpenSidebarHover extends Plugin {
     }
   };
 
+  /**
+   * 左侧分割区域鼠标离开事件处理程序
+   * @param event 鼠标事件
+   */
   leftSplitMouseLeaveHandler = (event: MouseEvent) => {
-    // Don't process if we're leaving to the tab header container or a menu
+    // 如果离开到标签头容器或菜单，则不处理
     const target = event.relatedTarget as HTMLElement;
     if (target && (target.closest('.workspace-tab-header-container-inner') ||
-                  (target.hasClass && target.hasClass('menu')) ||
-                  target?.classList?.contains('menu') ||
-                  target?.closest('.menu'))) {
+      (target.hasClass && target.hasClass('menu')) ||
+      target?.classList?.contains('menu') ||
+      target?.closest('.menu'))) {
       return;
     }
 
-    // Don't collapse if window is not focused and setting is enabled
+    // 如果窗口未聚焦且启用了该设置，则不折叠
     if (this.settings.onlyWhenFocused && !document.hasFocus()) return;
 
-    // Don't collapse if user is actively editing (rename, menu open, etc.)
+    // 如果用户正在编辑（重命名、菜单打开等），则不折叠
     if (this.isActivelyEditing()) return;
 
     if (this.settings.leftSidebar && !this.isPinnedLeft) {
       this.isHoveringLeft = false;
-      // Remove the hovered class
+      // 移除悬停类
       this.leftSplit.containerEl.removeClass('hovered');
 
       setTimeout(() => {
-        // Re-check editing state before collapsing
+        // 折叠前重新检查编辑状态
         if (!this.isHoveringLeft && !this.isActivelyEditing()) {
           if (this.settings.syncLeftRight && this.settings.rightSidebar) {
             this.collapseBoth();
@@ -592,11 +669,14 @@ export default class OpenSidebarHover extends Plugin {
     }
   };
 
+  /**
+   * 左侧功能区鼠标进入事件处理程序
+   */
   leftRibbonMouseEnterHandler = () => {
     if (this.settings.leftSidebar) {
       this.isHoveringLeft = true;
       setTimeout(() => {
-        // Check if still hovering
+        // 检查是否仍在悬停
         if (this.isHoveringLeft) {
           if (this.settings.syncLeftRight && this.settings.rightSidebar) {
             this.expandBoth();
@@ -609,24 +689,35 @@ export default class OpenSidebarHover extends Plugin {
   };
 }
 
+/**
+ * 侧边栏悬停设置选项卡
+ */
 class SidebarHoverSettingsTab extends PluginSettingTab {
   plugin: OpenSidebarHover;
 
+  /**
+   * 构造函数
+   * @param app Obsidian应用实例
+   * @param plugin 插件实例
+   */
   constructor(app: App, plugin: OpenSidebarHover) {
     super(app, plugin);
     this.plugin = plugin;
   }
 
+  /**
+   * 显示设置选项卡
+   */
   display(): void {
     const { containerEl } = this;
 
     containerEl.empty();
 
-    // BASIC SETTINGS (no heading)
+    // 基本设置（无标题）
     new Setting(containerEl)
-      .setName("Left sidebar hover")
+      .setName("左侧边栏悬停")
       .setDesc(
-        "Enables the expansion and collapsing of the left sidebar on hover."
+        "启用左侧边栏的悬停展开和折叠功能。"
       )
       .addToggle((t) =>
         t.setValue(this.plugin.settings.leftSidebar).onChange(async (value) => {
@@ -636,9 +727,9 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Right sidebar hover")
+      .setName("右侧边栏悬停")
       .setDesc(
-        "Enables the expansion and collapsing of the right sidebar on hover. Only collapses the right panel unless you have a right ribbon."
+        "启用右侧边栏的悬停展开和折叠功能。仅折叠右侧面板，除非您有右侧功能区。"
       )
       .addToggle((t) =>
         t
@@ -650,9 +741,9 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Sync left and right")
+      .setName("同步左右侧边栏")
       .setDesc(
-        "If enabled, hovering over the right sidebar will also expand the left sidebar at the same time, and vice versa. (Left and Right sidebar must both be enabled above)"
+        "如果启用，悬停在右侧边栏时也会同时展开左侧边栏，反之亦然。（左侧和右侧边栏必须都在上方启用）"
       )
       .addToggle((t) =>
         t
@@ -664,62 +755,62 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Overlay mode")
+      .setName("覆盖模式")
       .setDesc(
-        "When enabled, sidebars will slide over the main content without affecting the layout. When disabled, sidebars will expand by pushing content."
+        "启用时，侧边栏会滑过主内容而不影响布局。禁用时，侧边栏会通过推挤内容来展开。"
       )
       .addToggle((t) =>
         t
           .setValue(this.plugin.settings.overlayMode)
           .onChange(async (value) => {
             this.plugin.settings.overlayMode = value;
-            
-            // Update CSS class on body to toggle overlay mode
+
+            // 更新body上的CSS类以切换覆盖模式
             if (value) {
               document.body.classList.add("sidebar-overlay-mode");
             } else {
               document.body.classList.remove("sidebar-overlay-mode");
             }
-            
+
             await this.plugin.saveSettings();
           })
       );
 
     new Setting(containerEl)
-    .setName("Double Click Pin Sidebar")
-    .setDesc(
-      "When enabled, double-click to keep the sidebar open. Double-click again to unpin it."
-    )
-    .addToggle((t) =>
-      t
-        .setValue(this.plugin.settings.doubleClickPin)
-        .onChange(async (value) => {
-          this.plugin.settings.doubleClickPin = value;
-          await this.plugin.saveSettings();
-        })
-    );
-
-    new Setting(containerEl)
-    .setName("Only when focused")
-    .setDesc(
-      "When enabled, sidebar hover will only trigger when Obsidian is the focused application. Useful when using split screen with other apps."
-    )
-    .addToggle((t) =>
-      t
-        .setValue(this.plugin.settings.onlyWhenFocused)
-        .onChange(async (value) => {
-          this.plugin.settings.onlyWhenFocused = value;
-          await this.plugin.saveSettings();
-        })
-    );
-
-    // BEHAVIOR SECTION
-    new Setting(containerEl).setName("Behavior").setHeading();
-
-    new Setting(containerEl)
-      .setName("Left sidebar pixel trigger")
+      .setName("双击固定侧边栏")
       .setDesc(
-        "Specify the number of pixels from the left edge of the editor that will trigger the left sidebar to open on hover (must be greater than 0)"
+        "启用时，双击可保持侧边栏打开。再次双击可取消固定。"
+      )
+      .addToggle((t) =>
+        t
+          .setValue(this.plugin.settings.doubleClickPin)
+          .onChange(async (value) => {
+            this.plugin.settings.doubleClickPin = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("仅在聚焦时")
+      .setDesc(
+        "启用时，仅当Obsidian是聚焦的应用程序时才会触发侧边栏悬停。在与其他应用程序分屏时很有用。"
+      )
+      .addToggle((t) =>
+        t
+          .setValue(this.plugin.settings.onlyWhenFocused)
+          .onChange(async (value) => {
+            this.plugin.settings.onlyWhenFocused = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    // 行为部分
+    new Setting(containerEl).setName("行为").setHeading();
+
+    new Setting(containerEl)
+      .setName("左侧边栏像素触发器")
+      .setDesc(
+        "指定从编辑器左边缘开始触发左侧边栏悬停打开的像素数（必须大于0）"
       )
       .addText((text) => {
         text
@@ -738,9 +829,9 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Right sidebar pixel trigger")
+      .setName("右侧边栏像素触发器")
       .setDesc(
-        "Specify the number of pixels from the right edge of the editor that will trigger the right sidebar to open on hover (must be greater than 0)"
+        "指定从编辑器右边缘开始触发右侧边栏悬停打开的像素数（必须大于0）"
       )
       .addText((text) => {
         text
@@ -758,13 +849,13 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
           });
       });
 
-    // TIMING SECTION
-    new Setting(containerEl).setName("Timing").setHeading();
+    // 定时部分
+    new Setting(containerEl).setName("定时").setHeading();
 
     new Setting(containerEl)
-      .setName("Sidebar collapse delay")
+      .setName("侧边栏折叠延迟")
       .setDesc(
-        "The delay in milliseconds before the sidebar collapses after the mouse has left. Enter '0' to disable delay."
+        "鼠标离开后侧边栏折叠前的延迟（毫秒）。输入'0'可禁用延迟。"
       )
       .addText((text) => {
         text
@@ -782,9 +873,9 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Sidebar expand delay")
+      .setName("侧边栏展开延迟")
       .setDesc(
-        "The delay in milliseconds before the sidebar expands after hovering. Default is 200ms."
+        "悬停后侧边栏展开前的延迟（毫秒）。默认为200ms。"
       )
       .addText((text) => {
         text
@@ -797,16 +888,16 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
             } else {
               this.plugin.settings.sidebarExpandDelay = v;
             }
-            // Apply the CSS variables immediately
+            // 立即应用CSS变量
             this.plugin.updateCSSVariables();
             await this.plugin.saveSettings();
           });
       });
-      
+
     new Setting(containerEl)
-      .setName("Expand/collapse animation speed")
+      .setName("展开/折叠动画速度")
       .setDesc(
-        "The speed of the sidebar expand/collapse animation in milliseconds."
+        "侧边栏展开/折叠动画的速度（毫秒）。"
       )
       .addText((text) => {
         text
@@ -819,19 +910,19 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
             } else {
               this.plugin.settings.expandCollapseSpeed = v;
             }
-            // Apply the CSS variables immediately
+            // 立即应用CSS变量
             this.plugin.updateCSSVariables();
             await this.plugin.saveSettings();
           });
       });
 
-    // APPEARANCE SECTION
-    new Setting(containerEl).setName("Appearance").setHeading();
+    // 外观部分
+    new Setting(containerEl).setName("外观").setHeading();
 
     new Setting(containerEl)
-      .setName("Left sidebar maximum width")
+      .setName("左侧边栏最大宽度")
       .setDesc(
-        "Specify the maximum width in pixels for the left sidebar when expanded"
+        "指定左侧边栏展开时的最大宽度（像素）"
       )
       .addText((text) => {
         text
@@ -844,16 +935,16 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
             } else {
               this.plugin.settings.leftSidebarMaxWidth = v;
             }
-            // Apply the CSS variables immediately
-            this.plugin.updateCSSVariables();            
+            // 立即应用CSS变量
+            this.plugin.updateCSSVariables();
             await this.plugin.saveSettings();
           });
       });
 
     new Setting(containerEl)
-      .setName("Right sidebar maximum width")
+      .setName("右侧边栏最大宽度")
       .setDesc(
-        "Specify the maximum width in pixels for the right sidebar when expanded"
+        "指定右侧边栏展开时的最大宽度（像素）"
       )
       .addText((text) => {
         text
@@ -866,7 +957,7 @@ class SidebarHoverSettingsTab extends PluginSettingTab {
             } else {
               this.plugin.settings.rightSidebarMaxWidth = v;
             }
-            // Apply the CSS variables immediately
+            // 立即应用CSS变量
             this.plugin.updateCSSVariables();
             await this.plugin.saveSettings();
           });
