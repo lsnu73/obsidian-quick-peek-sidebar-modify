@@ -1,5 +1,4 @@
 import LanguageTranslationInterface from "./LanguageTranslationInterface";
-import DEFAULT_SETTINGS from "../setting/DEFAULT_SETTINGS";
 import {SettingsOptionInterface} from "./SettingsOptionInterface";
 
 /**

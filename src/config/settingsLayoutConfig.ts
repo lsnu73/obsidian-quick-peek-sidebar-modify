@@ -30,7 +30,7 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                     nameKey: "overlayMode",
                     descKey: "overlayModeDesc",
                     settingKey: "overlayMode",
-                    onChange: async (value: boolean, plugin: any) => {
+                    onChange: async (value: boolean, _plugin: any) => {
                         if (value) {
                             document.body.classList.add("sidebar-overlay-mode");
                         } else {
