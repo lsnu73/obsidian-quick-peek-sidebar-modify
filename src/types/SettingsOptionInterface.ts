@@ -16,4 +16,5 @@ export interface SettingsOptionInterface {
     leftSidebarMaxWidth: number;
     rightSidebarMaxWidth: number;
     language: string;
+    collapseOnWorkspaceChange: boolean;
 }

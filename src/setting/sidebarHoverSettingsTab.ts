@@ -2,8 +2,8 @@ import {App, Notice, PluginSettingTab} from "obsidian";
 import LanguageTranslationInterface from "../types/LanguageTranslationInterface";
 import {languageMap} from "../lang";
 import OpenSidebarHover from "../main";
-import {SETTINGS_LAYOUT} from "./settingsLayoutConfig";
-import {SettingFactory} from "./SettingFactory";
+import {SETTINGS_LAYOUT} from "../config/settingsLayoutConfig";
+import {SettingFactory} from "../utils/SettingFactory";
 
 
 /**
@@ -56,7 +56,6 @@ export class SidebarHoverSettingsTab extends PluginSettingTab {
                         (config.options as Record<string, string>)[key] = key;
                     });
                 }
-
                 SettingFactory.createSetting(containerEl, config, currentLanguage, this.plugin, this);
             });
         });

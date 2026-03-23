@@ -1,8 +1,9 @@
 import {SettingsLayoutConfig} from "../types/SettingsConfigInterface";
-import DEFAULT_SETTINGS from "../types/DEFAULT_SETTINGS";
+import DEFAULT_SETTINGS from "../setting/DEFAULT_SETTINGS";
 
 export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
     sections: [
+        // 行为相关的选项
         {
             titleKey: "behavior",
             settings: [
@@ -49,6 +50,13 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                     descKey: "onlyWhenFocusedDesc",
                     settingKey: "onlyWhenFocused"
                 },
+                // 工作区变化时（例如切换笔记），是否折叠左右侧面板
+                {
+                    type: "toggle",
+                    nameKey: "collapseOnWorkspaceChange",
+                    descKey: "collapseOnWorkspaceChangeDesc",
+                    settingKey: "collapseOnWorkspaceChange"
+                },
                 {
                     type: "text",
                     nameKey: "leftSidebarPixelTrigger",
@@ -67,8 +75,10 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                     defaultValue: DEFAULT_SETTINGS.rightSideBarPixelTrigger,
                     validation: (value: number) => value >= 1
                 }
+
             ]
         },
+        // 延迟相关的选项
         {
             titleKey: "timing",
             settings: [
@@ -107,6 +117,7 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                 }
             ]
         },
+        // 外观相关的选项
         {
             titleKey: "appearance",
             settings: [

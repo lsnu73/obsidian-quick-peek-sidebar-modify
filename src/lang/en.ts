@@ -30,6 +30,8 @@ const en: LanguageTranslationInterface = {
     leftSidebarPixelTriggerDesc: "Specify the number of pixels from the left edge of the editor to trigger left sidebar hover open (must be greater than 0)",
     rightSidebarPixelTrigger: "Right Sidebar Pixel Trigger",
     rightSidebarPixelTriggerDesc: "Specify the number of pixels from the right edge of the editor to trigger right sidebar hover open (must be greater than 0)",
+    collapseOnWorkspaceChange: "When the workspace changes, should the left and right panels be collapsed",
+    collapseOnWorkspaceChangeDesc: "If enabled, the left and right panels will automatically fold when switching notes.",
 
     // 定时设置
     sidebarDelay: "Sidebar Collapse Delay",
@@ -44,6 +46,6 @@ const en: LanguageTranslationInterface = {
     leftSidebarMaxWidthDesc: "Specify the maximum width of the left sidebar when expanded (pixels)",
     rightSidebarMaxWidth: "Right Sidebar Max Width",
     rightSidebarMaxWidthDesc: "Specify the maximum width of the right sidebar when expanded (pixels)",
-    language: "Choose Language",
+    language: "Choose Language"
 };
 export default en;

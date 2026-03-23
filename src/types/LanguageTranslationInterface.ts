@@ -162,6 +162,14 @@ interface LanguageTranslationInterface {
      * 语言
      */
     language: string;
+    /**
+     * 工作区变化自动折叠左右面板
+     */
+    collapseOnWorkspaceChange: string;
+    /**
+     *  工作区变化自动折叠左右面板选项的描述
+     */
+    collapseOnWorkspaceChangeDesc: string;
 }
 
 export default LanguageTranslationInterface

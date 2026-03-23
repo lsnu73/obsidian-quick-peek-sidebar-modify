@@ -1,5 +1,5 @@
 import { getDefaultLanguageCode } from "../lang";
-import { SettingsOptionInterface } from "./SettingsOptionInterface";
+import { SettingsOptionInterface } from "../types/SettingsOptionInterface";
 
 /**
  * 插件设置
@@ -65,6 +65,10 @@ const DEFAULT_SETTINGS: SettingsOptionInterface = {
      * 语言 code
      */
     language: getDefaultLanguageCode(),
+    /**
+     * 工作区变化时是否折叠左右侧面板
+     */
+    collapseOnWorkspaceChange: false,
 };
 
 export default DEFAULT_SETTINGS;

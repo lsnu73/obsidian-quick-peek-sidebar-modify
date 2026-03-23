@@ -1,7 +1,7 @@
 import {Plugin, WorkspaceRibbon, WorkspaceSplit} from "obsidian";
 import {SettingsOptionInterface} from "./types/SettingsOptionInterface";
 import {SidebarHoverSettingsTab} from "./setting/sidebarHoverSettingsTab";
-import DEFAULT_SETTINGS from "./types/DEFAULT_SETTINGS";
+import DEFAULT_SETTINGS from "./setting/DEFAULT_SETTINGS";
 
 // 扩展接口以访问内部属性
 interface ExtendedWorkspaceSplit extends WorkspaceSplit {
@@ -103,7 +103,9 @@ export default class OpenSidebarHover extends Plugin {
         // 清理并重新附加事件
         this.detachManualEvents();
         this.attachManualEvents();
-        this.collapseBoth();
+        if (this.settings.collapseOnWorkspaceChange) {
+            this.collapseBoth();
+        }
     }
 
     /**

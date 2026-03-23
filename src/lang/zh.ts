@@ -30,6 +30,8 @@ const zh: LanguageTranslationInterface = {
     leftSidebarPixelTriggerDesc: "指定从编辑器左边缘开始触发左侧边栏悬停打开的像素数（必须大于0）",
     rightSidebarPixelTrigger: "右侧边栏像素触发器",
     rightSidebarPixelTriggerDesc: "指定从编辑器右边缘开始触发右侧边栏悬停打开的像素数（必须大于0）",
+    collapseOnWorkspaceChange: "工作区变化时，是否折叠左右侧面板",
+    collapseOnWorkspaceChangeDesc: "如果启用，当切换切换笔记后自动折叠左右面板",
 
     // 定时设置
     sidebarDelay: "侧边栏折叠延迟",
