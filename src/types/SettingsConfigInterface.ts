@@ -1,5 +1,7 @@
 import LanguageTranslationInterface from "./LanguageTranslationInterface";
 import {SettingsOptionInterface} from "./SettingsOptionInterface";
+import OpenSidebarHover from "../main";
+import {SidebarHoverSettingsTab} from "../setting/sidebarHoverSettingsTab";
 
 /**
  * 设置项类型
@@ -48,7 +50,7 @@ export interface SettingConfig {
     /**
      *  默认值
      */
-    defaultValue?: any;
+    defaultValue?: string | boolean | number;
     /**
      *  下拉选项选项值（用于下拉选择框）
      */
@@ -56,11 +58,11 @@ export interface SettingConfig {
     /**
      *  变化回调函数（用于处理设置项值变化）
      */
-    onChange?: (value: any, plugin: any, settingsTab?: any) => void | Promise<void>;
+    onChange?: (value: string | boolean | number, plugin: OpenSidebarHover, settingsTab?: SidebarHoverSettingsTab) => void | Promise<void>;
     /**
      *  验证函数（用于验证设置项值）
      */
-    validation?: (value: any) => boolean;
+    validation?: (value: string | boolean | number) => boolean;
     /**
      *  是否为标题项（用于在设置项中显示）
      */

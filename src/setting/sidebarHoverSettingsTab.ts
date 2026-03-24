@@ -4,6 +4,7 @@ import {languageMap} from "../lang";
 import OpenSidebarHover from "../main";
 import {SETTINGS_LAYOUT} from "../config/settingsLayoutConfig";
 import {SettingFactory} from "../utils/SettingFactory";
+import {SettingConfig} from "../types/SettingsConfigInterface";
 
 
 /**
@@ -43,8 +44,8 @@ export class SidebarHoverSettingsTab extends PluginSettingTab {
             const headingConfig = {
                 type: "heading" as const,
                 nameKey: section.titleKey,
-                settingKey: "" as any
-            };
+                settingKey: "rightSidebarMaxWidth", // 随便取一个 key，因为这里只是用来创建一个标题
+            } as SettingConfig;
             SettingFactory.createSetting(containerEl, headingConfig, currentLanguage, this.plugin, this);
 
             section.settings.forEach(settingConfig => {

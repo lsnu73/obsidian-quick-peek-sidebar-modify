@@ -1,5 +1,7 @@
 import {SettingsLayoutConfig} from "../types/SettingsConfigInterface";
 import DEFAULT_SETTINGS from "../setting/DEFAULT_SETTINGS";
+import OpenSidebarHover from "../main";
+import {SidebarHoverSettingsTab} from "../setting/sidebarHoverSettingsTab";
 
 export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
     sections: [
@@ -30,7 +32,7 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                     nameKey: "overlayMode",
                     descKey: "overlayModeDesc",
                     settingKey: "overlayMode",
-                    onChange: async (value: boolean, _plugin: any) => {
+                    onChange: (value: boolean, _plugin: OpenSidebarHover) => {
                         if (value) {
                             document.body.classList.add("sidebar-overlay-mode");
                         } else {
@@ -99,7 +101,7 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                     placeholder: "200",
                     defaultValue: DEFAULT_SETTINGS.sidebarExpandDelay,
                     validation: (value: number) => value >= 0,
-                    onChange: async (_value: any, plugin: any) => {
+                    onChange: (_value: string, plugin: OpenSidebarHover) => {
                         plugin.updateCSSVariables();
                     }
                 },
@@ -111,7 +113,7 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                     placeholder: "300",
                     defaultValue: DEFAULT_SETTINGS.expandCollapseSpeed,
                     validation: (value: number) => value >= 0,
-                    onChange: async (_value: any, plugin: any) => {
+                    onChange: (_value: string, plugin: OpenSidebarHover) => {
                         plugin.updateCSSVariables();
                     }
                 }
@@ -126,7 +128,7 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                     nameKey: "language",
                     settingKey: "language",
                     options: {} as Record<string, string>,
-                    onChange: async (_value: any, plugin: any, settingsTab: any) => {
+                    onChange: (_value: string, _plugin: OpenSidebarHover, settingsTab: SidebarHoverSettingsTab) => {
                         settingsTab.display();
                     }
                 },
@@ -138,7 +140,7 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                     placeholder: "300",
                     defaultValue: DEFAULT_SETTINGS.leftSidebarMaxWidth,
                     validation: (value: number) => value >= 100,
-                    onChange: async (_value: any, plugin: any) => {
+                    onChange: (_value: string, plugin: OpenSidebarHover) => {
                         plugin.updateCSSVariables();
                     }
                 },
@@ -150,7 +152,7 @@ export const SETTINGS_LAYOUT: SettingsLayoutConfig = {
                     placeholder: "300",
                     defaultValue: DEFAULT_SETTINGS.rightSidebarMaxWidth,
                     validation: (value: number) => value >= 100,
-                    onChange: async (_value: any, plugin: any) => {
+                    onChange: (_value: string, plugin: OpenSidebarHover) => {
                         plugin.updateCSSVariables();
                     }
                 }

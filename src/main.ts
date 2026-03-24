@@ -1,6 +1,6 @@
-import { Plugin, WorkspaceRibbon, WorkspaceSplit } from "obsidian";
-import { SettingsOptionInterface } from "./types/SettingsOptionInterface";
-import { SidebarHoverSettingsTab } from "./setting/sidebarHoverSettingsTab";
+import {Plugin, WorkspaceRibbon, WorkspaceSplit} from "obsidian";
+import {SettingsOptionInterface} from "./types/SettingsOptionInterface";
+import {SidebarHoverSettingsTab} from "./setting/sidebarHoverSettingsTab";
 import DEFAULT_SETTINGS from "./setting/DEFAULT_SETTINGS";
 
 // 扩展接口以访问内部属性
@@ -95,8 +95,8 @@ export default class OpenSidebarHover extends Plugin {
      */
     forceReinitialize() {
         // 重置所有状态并获取新的引用
-        this.leftSplit = this.app.workspace.leftSplit as any;
-        this.rightSplit = this.app.workspace.rightSplit as any;
+        this.leftSplit = this.app.workspace.leftSplit as unknown as ExtendedWorkspaceSplit;
+        this.rightSplit = this.app.workspace.rightSplit as unknown as ExtendedWorkspaceSplit;
         this.isHoveringLeft = false;
         this.isHoveringRight = false;
 
@@ -181,7 +181,7 @@ export default class OpenSidebarHover extends Plugin {
         // 辅助函数，用于跟踪事件以便清理
         const attach = (element: HTMLElement, type: string, handler: EventListener) => {
             element.addEventListener(type, handler);
-            this.manualEvents.push({ element, type, handler });
+            this.manualEvents.push({element, type, handler});
         };
 
         // 为右侧分割区域添加悬停类的实现
@@ -222,7 +222,7 @@ export default class OpenSidebarHover extends Plugin {
      */
     detachManualEvents() {
         // 移除所有跟踪的事件监听器
-        this.manualEvents.forEach(({ element, type, handler }) => {
+        this.manualEvents.forEach(({element, type, handler}) => {
             element.removeEventListener(type, handler);
         });
         this.manualEvents = [];
@@ -276,8 +276,8 @@ export default class OpenSidebarHover extends Plugin {
             name: "切换两侧边栏",
             callback: () => {
                 this.toggleBothSidebars();
-            },
-            hotkeys: [{ modifiers: [], key: 'Escape' }]
+            }
+            // hotkeys: [{modifiers: [], key: 'Escape'}]
         });
 
         this.app.workspace.onLayoutReady(() => {
@@ -308,7 +308,7 @@ export default class OpenSidebarHover extends Plugin {
      * 插件卸载时执行
      */
     onunload() {
-        this.saveSettings().then();
+        void this.saveSettings();
 
         // 如果添加了覆盖模式类，则移除
         document.body.classList.remove("sidebar-overlay-mode");

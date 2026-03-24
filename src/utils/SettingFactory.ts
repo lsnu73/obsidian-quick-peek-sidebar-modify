@@ -1,6 +1,8 @@
-import { Setting } from "obsidian";
-import { SettingConfig } from "../types/SettingsConfigInterface";
+import {Setting} from "obsidian";
+import {SettingConfig} from "../types/SettingsConfigInterface";
 import LanguageTranslationInterface from "../types/LanguageTranslationInterface";
+import OpenSidebarHover from "../main";
+import {SidebarHoverSettingsTab} from "../setting/sidebarHoverSettingsTab";
 
 /**
  * 设置项的简单工厂，根据 SETTINGS_LAYOUT 中的配置创建对应的 Setting
@@ -19,8 +21,8 @@ export class SettingFactory {
         containerEl: HTMLElement,
         config: SettingConfig,
         currentLanguage: LanguageTranslationInterface,
-        plugin: any,
-        settingsTab: any
+        plugin: OpenSidebarHover,
+        settingsTab: SidebarHoverSettingsTab
     ): Setting | null {
         const setting = new Setting(containerEl);
 
@@ -34,10 +36,11 @@ export class SettingFactory {
             case "heading":
                 return this.createHeadingSetting(setting, config, currentLanguage);
             default:
-                console.warn(`Unknown setting type: ${config.type}`);
+                console.warn(`Unknown setting type`);
                 return null;
         }
     }
+
     /**
      * 创建切换设置项
      * @param setting 设置项实例
@@ -50,35 +53,36 @@ export class SettingFactory {
         setting: Setting,
         config: SettingConfig,
         currentLanguage: LanguageTranslationInterface,
-        plugin: any
+        plugin: OpenSidebarHover
     ): Setting {
         setting
             .setName(currentLanguage[config.nameKey])
             .setDesc(config.descKey ? currentLanguage[config.descKey] : "")
-            .addToggle((t) =>
-                t.setValue(plugin.settings[config.settingKey]).onChange(async (value) => {
-                    plugin.settings[config.settingKey] = value;
+            .addToggle((t) => {
+                t.setValue(plugin.settings[config.settingKey] as boolean).onChange(async (value) => {
+                    (plugin.settings[config.settingKey] as boolean) = value;
                     if (config.onChange) {
                         await config.onChange(value, plugin);
                     }
                     await plugin.saveSettings();
                 })
-            );
+            });
         return setting;
     }
+
     /**
      * 创建文本设置项
      * @param setting 设置项实例
      * @param config 设置项配置
      * @param currentLanguage 当前语言翻译
      * @param plugin 插件实例
-     * @returns Setting实例
+     * @returns Setting setting 实例
      */
     private static createTextSetting(
         setting: Setting,
         config: SettingConfig,
         currentLanguage: LanguageTranslationInterface,
-        plugin: any
+        plugin: OpenSidebarHover
     ): Setting {
         setting
             .setName(currentLanguage[config.nameKey])
@@ -91,9 +95,9 @@ export class SettingFactory {
                     .onChange(async (value) => {
                         const v = Number(value);
                         if (!value || isNaN(v) || (config.validation && !config.validation(v))) {
-                            plugin.settings[config.settingKey] = config.defaultValue;
+                            (plugin.settings[config.settingKey] as string) = config.defaultValue as string;
                         } else {
-                            plugin.settings[config.settingKey] = v;
+                            (plugin.settings[config.settingKey] as number) = v;
                         }
                         if (config.onChange) {
                             await config.onChange(v, plugin);
@@ -103,6 +107,7 @@ export class SettingFactory {
             });
         return setting;
     }
+
     /**
      * 创建下拉设置项
      * @param setting 设置项实例
@@ -116,8 +121,8 @@ export class SettingFactory {
         setting: Setting,
         config: SettingConfig,
         currentLanguage: LanguageTranslationInterface,
-        plugin: any,
-        settingsTab: any
+        plugin: OpenSidebarHover,
+        settingsTab: SidebarHoverSettingsTab
     ): Setting {
         setting.setName(currentLanguage[config.nameKey]);
 
@@ -131,9 +136,9 @@ export class SettingFactory {
                     component.addOption(key, label);
                 });
             }
-            component.setValue(plugin.settings[config.settingKey]);
+            component.setValue(plugin.settings[config.settingKey] as string);
             component.onChange(async (value) => {
-                plugin.settings[config.settingKey] = value;
+                (plugin.settings[config.settingKey] as string) = value;
                 if (config.onChange) {
                     await config.onChange(value, plugin, settingsTab);
                 }
@@ -142,6 +147,7 @@ export class SettingFactory {
         });
         return setting;
     }
+
     /**
      * 创建标题设置项
      * @param setting 设置项实例
