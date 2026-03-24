@@ -1,6 +1,6 @@
-import {Plugin, WorkspaceRibbon, WorkspaceSplit} from "obsidian";
-import {SettingsOptionInterface} from "./types/SettingsOptionInterface";
-import {SidebarHoverSettingsTab} from "./setting/sidebarHoverSettingsTab";
+import { Plugin, WorkspaceRibbon, WorkspaceSplit } from "obsidian";
+import { SettingsOptionInterface } from "./types/SettingsOptionInterface";
+import { SidebarHoverSettingsTab } from "./setting/sidebarHoverSettingsTab";
 import DEFAULT_SETTINGS from "./setting/DEFAULT_SETTINGS";
 
 // 扩展接口以访问内部属性
@@ -181,7 +181,7 @@ export default class OpenSidebarHover extends Plugin {
         // 辅助函数，用于跟踪事件以便清理
         const attach = (element: HTMLElement, type: string, handler: EventListener) => {
             element.addEventListener(type, handler);
-            this.manualEvents.push({element, type, handler});
+            this.manualEvents.push({ element, type, handler });
         };
 
         // 为右侧分割区域添加悬停类的实现
@@ -222,7 +222,7 @@ export default class OpenSidebarHover extends Plugin {
      */
     detachManualEvents() {
         // 移除所有跟踪的事件监听器
-        this.manualEvents.forEach(({element, type, handler}) => {
+        this.manualEvents.forEach(({ element, type, handler }) => {
             element.removeEventListener(type, handler);
         });
         this.manualEvents = [];
@@ -338,33 +338,15 @@ export default class OpenSidebarHover extends Plugin {
      * 更新CSS变量的辅助方法
      */
     updateCSSVariables() {
-        // 创建一个样式元素来保存自定义CSS变量
-        const styleEl = document.createElement('style');
-        styleEl.id = 'obsidian-quick-peek-sidebar-variables';
+        // 直接设置 :root 下的 CSS 变量
+        document.documentElement.style.setProperty('--sidebar-expand-collapse-speed', `${this.settings.expandCollapseSpeed}ms`);
+        document.documentElement.style.setProperty('--sidebar-expand-delay', `${this.settings.sidebarExpandDelay}ms`);
+        document.documentElement.style.setProperty('--left-sidebar-max-width', `${this.settings.leftSidebarMaxWidth}px`);
+        document.documentElement.style.setProperty('--right-sidebar-max-width', `${this.settings.rightSidebarMaxWidth}px`);
 
-        // 移除任何现有的具有此ID的样式元素
-        const existingStyle = document.getElementById(styleEl.id);
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-
-        // 向样式元素添加CSS变量
-        styleEl.textContent = `
-      :root {
-        --sidebar-expand-collapse-speed: ${this.settings.expandCollapseSpeed}ms;
-        --sidebar-expand-delay: ${this.settings.sidebarExpandDelay}ms;
-        --left-sidebar-max-width: ${this.settings.leftSidebarMaxWidth}px;
-        --right-sidebar-max-width: ${this.settings.rightSidebarMaxWidth}px;
-      }
-      
-      body {
-        --sidebar-width: ${this.settings.leftSidebarMaxWidth}px !important;
-        --right-sidebar-width: ${this.settings.rightSidebarMaxWidth}px !important;
-      }
-    `;
-
-        // 将样式元素添加到文档头部
-        document.head.appendChild(styleEl);
+        // 直接设置 body 下的 CSS 变量
+        document.body.style.setProperty('--sidebar-width', `${this.settings.leftSidebarMaxWidth}px`);
+        document.body.style.setProperty('--right-sidebar-width', `${this.settings.rightSidebarMaxWidth}px`);
     }
 
     // 辅助方法
