@@ -1,10 +1,10 @@
-import {App, Notice, PluginSettingTab} from "obsidian";
+import { App, Notice, PluginSettingTab } from "obsidian";
 import LanguageTranslationInterface from "../types/LanguageTranslationInterface";
-import {languageMap} from "../lang";
+import { languageMap } from "../lang";
 import OpenSidebarHover from "../main";
-import {SETTINGS_LAYOUT} from "../config/settingsLayoutConfig";
-import {SettingFactory} from "../utils/SettingFactory";
-import {SettingConfig} from "../types/SettingsConfigInterface";
+import { SETTINGS_LAYOUT } from "../config/settingsLayoutConfig";
+import { SettingFactory } from "../utils/SettingFactory";
+import { SettingConfig } from "../types/SettingsConfigInterface";
 
 
 /**
@@ -27,11 +27,11 @@ export class SidebarHoverSettingsTab extends PluginSettingTab {
      * 显示设置选项卡
      */
     display(): void {
-        const {containerEl} = this;
+        const { containerEl } = this;
 
         const currentLanguage: LanguageTranslationInterface | undefined = languageMap.get(this.plugin.settings.language);
         if (currentLanguage === undefined) {
-            new Notice("无法获取插件语言包，请检查 languageMap 中是否设置对应的语言包")
+            new Notice("无法获取插件语言包，请检查 languagemap 中是否设置对应的语言包")
             this.plugin.onunload();
             return;
         }
@@ -49,7 +49,7 @@ export class SidebarHoverSettingsTab extends PluginSettingTab {
             SettingFactory.createSetting(containerEl, headingConfig, currentLanguage, this.plugin, this);
 
             section.settings.forEach(settingConfig => {
-                const config = {...settingConfig};
+                const config = { ...settingConfig };
 
                 if (config.type === "dropdown" && config.settingKey === "language") {
                     config.options = {};

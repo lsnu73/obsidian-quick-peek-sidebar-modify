@@ -12,7 +12,7 @@ const en: LanguageTranslationInterface = {
     rightSidebarHover: "Right sidebar hover",
     rightSidebarHoverDesc: "Enable hover to expand and collapse the right sidebar. Only collapses the right panel unless you have a right ribbon.",
     syncLeftRightSidebar: "Sync left and right sidebars",
-    syncLeftRightSidebarDesc: "If enabled, hovering over the right sidebar will also expand the left sidebar and vice versa. (Both left and right sidebars must be enabled above)",
+    syncLeftRightSidebarDesc: "If enabled, hovering over the right sidebar will also expand the left sidebar and vice versa. (both left and right sidebars must be enabled above)",
     overlayMode: "Overlay mode",
     overlayModeDesc: "When enabled, sidebars will slide over the main content without affecting the layout. When disabled, sidebars will expand by pushing content.",
     doubleClickPin: "Double click to pin sidebar",
