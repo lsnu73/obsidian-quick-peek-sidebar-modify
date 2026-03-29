@@ -54,7 +54,7 @@ export default class OpenSidebarHover extends Plugin {
      */
     isActivelyEditing(): boolean {
         // 检查是否有打开的上下文菜单
-        const hasOpenMenu = document.querySelector('.menu') !== null;
+        const hasOpenMenu = document.querySelector('.sidebar-menu') !== null;
         if (hasOpenMenu) return true;
 
         // 检查文件浏览器中是否有项目正在重命名
@@ -559,7 +559,7 @@ export default class OpenSidebarHover extends Plugin {
         if (target && (target.closest('.workspace-tab-header-container-inner') ||
             (target.hasClass && target.hasClass('menu')) ||
             target?.classList?.contains('menu') ||
-            target?.closest('.menu'))) {
+            target?.closest('.sidebar-menu'))) {
             return;
         }
 
@@ -595,9 +595,9 @@ export default class OpenSidebarHover extends Plugin {
         // 如果离开到标签头容器或菜单，则不处理
         const target = event.relatedTarget as HTMLElement;
         if (target && (target.closest('.workspace-tab-header-container-inner') ||
-            (target.hasClass && target.hasClass('menu')) ||
-            target?.classList?.contains('menu') ||
-            target?.closest('.menu'))) {
+            (target.hasClass && target.hasClass('sidebar-menu')) ||
+            target?.classList?.contains('sidebar-menu') ||
+            target?.closest('.sidebar-menu'))) {
             return;
         }
 

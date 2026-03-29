@@ -74,7 +74,7 @@ body {
 }
 
 /* Implement the JS-CSS combined approach for handling menus */
-.open-sidebar-hover-plugin .menu {
+.open-sidebar-hover-plugin .sidebar-menu {
     /* Ensure menus don't interfere with sidebar hover */
     z-index: var(--layer-menu);
 }
@@ -87,7 +87,7 @@ body {
 }
 
 /* Ensure right-click context menus don't cause collapse */
-.open-sidebar-hover-plugin .workspace-split.hovered .menu,
-.open-sidebar-hover-plugin .menu {
+.open-sidebar-hover-plugin .workspace-split.hovered .sidebar-menu,
+.open-sidebar-hover-plugin .sidebar-menu {
     pointer-events: auto;
 }
