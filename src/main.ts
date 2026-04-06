@@ -53,8 +53,8 @@ export default class OpenSidebarHover extends Plugin {
      * @returns 是否正在编辑
      */
     isActivelyEditing(): boolean {
-        // 检查是否有打开的上下文菜单
-        const hasOpenMenu = document.querySelector('.sidebar-menu') !== null;
+        // 检查是否有打开菜单（.menu）、设置菜单（.mod-settings）、侧边栏菜单（.sidebar-menu）
+        const hasOpenMenu = document.querySelector('.sidebar-menu') !== null || document.querySelector('.menu') !== null || document.querySelector('.mod-settings') !== null;
         if (hasOpenMenu) return true;
 
         // 检查文件浏览器中是否有项目正在重命名
@@ -481,7 +481,6 @@ export default class OpenSidebarHover extends Plugin {
         }
     }
 
-    // 事件处理程序
     /**
      * 鼠标移动事件处理程序
      * @param event 鼠标事件
@@ -489,6 +488,11 @@ export default class OpenSidebarHover extends Plugin {
     mouseMoveHandler = (event: MouseEvent) => {
         // 如果启用了该设置且窗口未聚焦，则跳过悬停检测
         if (this.settings.onlyWhenFocused && !document.hasFocus()) {
+            return;
+        }
+
+        // 如果用户正在编辑（重命名、菜单打开、设置页面等），则跳过悬停检测
+        if (this.isActivelyEditing()) {
             return;
         }
 
@@ -504,7 +508,7 @@ export default class OpenSidebarHover extends Plugin {
 
                 if (this.isHoveringRight && this.rightSplit.collapsed) {
                     setTimeout(() => {
-                        if (this.isHoveringRight) {
+                        if (this.isHoveringRight && !this.isActivelyEditing()) {
                             if (this.settings.syncLeftRight) {
                                 this.expandBoth();
                             } else {
@@ -515,7 +519,7 @@ export default class OpenSidebarHover extends Plugin {
                 }
 
                 setTimeout(() => {
-                    if (!this.isHoveringRight) {
+                    if (!this.isHoveringRight && !this.isActivelyEditing()) {
                         this.collapseRight();
                     }
                 }, this.settings.sidebarDelay);
@@ -530,7 +534,7 @@ export default class OpenSidebarHover extends Plugin {
 
                 if (this.isHoveringLeft && this.leftSplit.collapsed) {
                     setTimeout(() => {
-                        if (this.isHoveringLeft) {
+                        if (this.isHoveringLeft && !this.isActivelyEditing()) {
                             if (this.settings.syncLeftRight) {
                                 this.expandBoth();
                             } else {
@@ -541,7 +545,7 @@ export default class OpenSidebarHover extends Plugin {
                 }
 
                 setTimeout(() => {
-                    if (!this.isHoveringLeft) {
+                    if (!this.isHoveringLeft && !this.isActivelyEditing()) {
                         this.collapseLeft();
                     }
                 }, this.settings.sidebarDelay);
@@ -557,8 +561,10 @@ export default class OpenSidebarHover extends Plugin {
         // 如果离开到标签头容器或菜单，则不处理
         const target = event.relatedTarget as HTMLElement;
         if (target && (target.closest('.workspace-tab-header-container-inner') ||
-            (target.hasClass && target.hasClass('menu')) ||
+            (target.hasClass && (target.hasClass('menu') || target.hasClass('sidebar-menu'))) ||
             target?.classList?.contains('menu') ||
+            target?.classList?.contains('sidebar-menu') ||
+            target?.closest('.menu') ||
             target?.closest('.sidebar-menu'))) {
             return;
         }
@@ -575,8 +581,8 @@ export default class OpenSidebarHover extends Plugin {
             this.rightSplit.containerEl.removeClass('hovered');
 
             setTimeout(() => {
-                // 折叠前重新检查编辑状态
-                if (!this.isHoveringRight && !this.isActivelyEditing()) {
+                // 折叠前重新检查编辑状态和菜单状态
+                if (!this.isHoveringRight && !this.isActivelyEditing() && !document.querySelector('.menu') && !document.querySelector('.sidebar-menu')) {
                     if (this.settings.syncLeftRight && this.settings.leftSidebar) {
                         this.collapseBoth();
                     } else {
@@ -595,8 +601,10 @@ export default class OpenSidebarHover extends Plugin {
         // 如果离开到标签头容器或菜单，则不处理
         const target = event.relatedTarget as HTMLElement;
         if (target && (target.closest('.workspace-tab-header-container-inner') ||
-            (target.hasClass && target.hasClass('sidebar-menu')) ||
+            (target.hasClass && (target.hasClass('menu') || target.hasClass('sidebar-menu'))) ||
+            target?.classList?.contains('menu') ||
             target?.classList?.contains('sidebar-menu') ||
+            target?.closest('.menu') ||
             target?.closest('.sidebar-menu'))) {
             return;
         }
@@ -613,8 +621,8 @@ export default class OpenSidebarHover extends Plugin {
             this.leftSplit.containerEl.removeClass('hovered');
 
             setTimeout(() => {
-                // 折叠前重新检查编辑状态
-                if (!this.isHoveringLeft && !this.isActivelyEditing()) {
+                // 折叠前重新检查编辑状态和菜单状态
+                if (!this.isHoveringLeft && !this.isActivelyEditing() && !document.querySelector('.menu') && !document.querySelector('.sidebar-menu')) {
                     if (this.settings.syncLeftRight && this.settings.rightSidebar) {
                         this.collapseBoth();
                     } else {
