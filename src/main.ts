@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceRibbon, WorkspaceSplit } from "obsidian";
+import { MarkdownView, Plugin, WorkspaceRibbon, WorkspaceSplit } from "obsidian";
 import { SettingsOptionInterface } from "./types/SettingsOptionInterface";
 import { SidebarHoverSettingsTab } from "./setting/sidebarHoverSettingsTab";
 import DEFAULT_SETTINGS from "./setting/DEFAULT_SETTINGS";
@@ -34,12 +34,13 @@ export default class OpenSidebarHover extends Plugin {
     leftSplitMouseMoveHandler: () => void;
     rightSplitMouseMoveHandler: () => void;
     workspaceChangeTimeout: NodeJS.Timeout | null = null;
-
     // 双击跟踪变量
     private lastClickTime = 0;
     private lastClickTarget: HTMLElement | null = null;
     private doubleClickThreshold = 300;
-
+    // 编辑状态缓存
+    private isEditingCache = false;
+    private editingStateUpdateTimer: NodeJS.Timeout | null = null;
     // 手动添加的事件进行清理跟踪
     private manualEvents: Array<{
         element: HTMLElement;
@@ -75,7 +76,36 @@ export default class OpenSidebarHover extends Plugin {
             }
         }
 
+        // 检查是否有文本被选择
+        // 检查全局选择
+        const globalSelection = window.getSelection();
+        // console.log(globalSelection);
+        if (globalSelection && globalSelection.toString().length > 0) return true;
+        
+        // 检查编辑器选择
+        const editor = this.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+        if (editor) {
+            const editorSelection = editor.getSelection();
+            if (editorSelection && editorSelection.length > 0) return true;
+        }
+
         return false;
+    }
+
+    /**
+     * 更新编辑状态缓存
+     * 通过事件驱动的方式更新，避免在鼠标移动时频繁检查
+     * 使用节流机制避免频繁调用
+     */
+    updateEditingState() {
+        if (this.editingStateUpdateTimer) {
+            return;
+        }
+        
+        this.editingStateUpdateTimer = setTimeout(() => {
+            this.isEditingCache = this.isActivelyEditing();
+            this.editingStateUpdateTimer = null;
+        }, 100);
     }
 
     /**
@@ -131,7 +161,7 @@ export default class OpenSidebarHover extends Plugin {
         }
 
         // 如果用户正在编辑（重命名、菜单打开等），则不折叠
-        if (this.isActivelyEditing()) return;
+        if (this.isEditingCache) return;
 
         // 如果窗口未聚焦且启用了该设置，则不折叠
         if (this.settings.onlyWhenFocused && !document.hasFocus()) return;
@@ -286,9 +316,17 @@ export default class OpenSidebarHover extends Plugin {
             this.rightSplit = this.app.workspace.rightSplit as unknown as ExtendedWorkspaceSplit;
             this.leftRibbon = this.app.workspace.leftRibbon as unknown as ExtendedWorkspaceRibbon;
 
+            // 初始化编辑状态缓存
+            this.updateEditingState();
+
             // 使用Obsidian的API注册自动清理的事件
             this.registerDomEvent(document, "mousemove", this.mouseMoveHandler);
             this.registerDomEvent(document, "click", this.documentClickHandler);
+
+            // 注册事件监听器来更新编辑状态缓存
+            this.registerDomEvent(document, "focusin", () => this.updateEditingState());
+            this.registerDomEvent(document, "focusout", () => this.updateEditingState());
+            this.registerDomEvent(document, "selectionchange", () => this.updateEditingState());
 
             // 防止工作区更改后插件损坏
             this.registerEvent(
@@ -492,7 +530,8 @@ export default class OpenSidebarHover extends Plugin {
         }
 
         // 如果用户正在编辑（重命名、菜单打开、设置页面等），则跳过悬停检测
-        if (this.isActivelyEditing()) {
+        // 使用缓存值而不是每次都检查
+        if (this.isEditingCache) {
             return;
         }
 
@@ -508,7 +547,7 @@ export default class OpenSidebarHover extends Plugin {
 
                 if (this.isHoveringRight && this.rightSplit.collapsed) {
                     setTimeout(() => {
-                        if (this.isHoveringRight && !this.isActivelyEditing()) {
+                        if (this.isHoveringRight && !this.isEditingCache) {
                             if (this.settings.syncLeftRight) {
                                 this.expandBoth();
                             } else {
@@ -519,7 +558,7 @@ export default class OpenSidebarHover extends Plugin {
                 }
 
                 setTimeout(() => {
-                    if (!this.isHoveringRight && !this.isActivelyEditing()) {
+                    if (!this.isHoveringRight && !this.isEditingCache) {
                         this.collapseRight();
                     }
                 }, this.settings.sidebarDelay);
@@ -534,7 +573,7 @@ export default class OpenSidebarHover extends Plugin {
 
                 if (this.isHoveringLeft && this.leftSplit.collapsed) {
                     setTimeout(() => {
-                        if (this.isHoveringLeft && !this.isActivelyEditing()) {
+                        if (this.isHoveringLeft && !this.isEditingCache) {
                             if (this.settings.syncLeftRight) {
                                 this.expandBoth();
                             } else {
@@ -545,7 +584,7 @@ export default class OpenSidebarHover extends Plugin {
                 }
 
                 setTimeout(() => {
-                    if (!this.isHoveringLeft && !this.isActivelyEditing()) {
+                    if (!this.isHoveringLeft && !this.isEditingCache) {
                         this.collapseLeft();
                     }
                 }, this.settings.sidebarDelay);
@@ -573,7 +612,7 @@ export default class OpenSidebarHover extends Plugin {
         if (this.settings.onlyWhenFocused && !document.hasFocus()) return;
 
         // 如果用户正在编辑（重命名、菜单打开等），则不折叠
-        if (this.isActivelyEditing()) return;
+        if (this.isEditingCache) return;
 
         if (this.settings.rightSidebar && !this.isPinnedRight) {
             this.isHoveringRight = false;
@@ -582,7 +621,7 @@ export default class OpenSidebarHover extends Plugin {
 
             setTimeout(() => {
                 // 折叠前重新检查编辑状态和菜单状态
-                if (!this.isHoveringRight && !this.isActivelyEditing() && !document.querySelector('.menu') && !document.querySelector('.sidebar-menu')) {
+                if (!this.isHoveringRight && !this.isEditingCache && !document.querySelector('.menu') && !document.querySelector('.sidebar-menu')) {
                     if (this.settings.syncLeftRight && this.settings.leftSidebar) {
                         this.collapseBoth();
                     } else {
@@ -613,7 +652,7 @@ export default class OpenSidebarHover extends Plugin {
         if (this.settings.onlyWhenFocused && !document.hasFocus()) return;
 
         // 如果用户正在编辑（重命名、菜单打开等），则不折叠
-        if (this.isActivelyEditing()) return;
+        if (this.isEditingCache) return;
 
         if (this.settings.leftSidebar && !this.isPinnedLeft) {
             this.isHoveringLeft = false;
@@ -622,7 +661,7 @@ export default class OpenSidebarHover extends Plugin {
 
             setTimeout(() => {
                 // 折叠前重新检查编辑状态和菜单状态
-                if (!this.isHoveringLeft && !this.isActivelyEditing() && !document.querySelector('.menu') && !document.querySelector('.sidebar-menu')) {
+                if (!this.isHoveringLeft && !this.isEditingCache && !document.querySelector('.menu') && !document.querySelector('.sidebar-menu')) {
                     if (this.settings.syncLeftRight && this.settings.rightSidebar) {
                         this.collapseBoth();
                     } else {
@@ -640,8 +679,8 @@ export default class OpenSidebarHover extends Plugin {
         if (this.settings.leftSidebar) {
             this.isHoveringLeft = true;
             setTimeout(() => {
-                // 检查是否仍在悬停
-                if (this.isHoveringLeft) {
+                // 检查是否仍在悬停且用户未在编辑
+                if (this.isHoveringLeft && !this.isEditingCache) {
                     if (this.settings.syncLeftRight && this.settings.rightSidebar) {
                         this.expandBoth();
                     } else {
